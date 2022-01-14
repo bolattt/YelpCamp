@@ -1,12 +1,22 @@
 const express = require('express')
-const app = express();
-const path = require('path')
-const mongoose = require('mongoose')
-const Campground = require('./models/campground')
 const methodOverride = require('method-override')
 const morgan = require('morgan')
 const ejsMate = require('ejs-mate')
+const session = require('express-session')
+const flash = require('connect-flash')
+
+const app = express();
+const path = require('path')
+const mongoose = require('mongoose')
+const Review = require('./models/review')
+
+const ExpressError = require('./utils/ExpressError')
 const AppError = require('./AppError')
+
+const {reviewSchema} = require('./schemas.js')
+
+const campgrounds = require('./routes/campgrounds')
+const reviews = require('./routes/reviews')
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp')
 .then(()=>console.log('database connected'))
@@ -19,6 +29,27 @@ app.set('views',path.join(__dirname,'views'))
 app.use(express.urlencoded({extended:true}))
 app.use(methodOverride('_method'))
 app.use(morgan('tiny'))
+app.use(express.static(path.join(__dirname,'public')))
+app.use(flash())
+
+const sessionConfig ={
+    secret: 'thisshouldbeabettersecret',
+    resave:false,
+    saveUnitialized:true,
+    cookie:{
+        httpOnly:true,
+        expires:Date.now() + 1000 * 60 * 60 * 24 * 7, 
+        maxAge : 1000 * 60 * 60 * 24 * 7 
+    }
+}
+
+app.use(session(sessionConfig))
+
+app.use((req,res,next) => {
+    res.locals.success = req.flash('success');
+    res.locals.error = req.flash('error')
+    next();
+})
 
 const verifyPassword = ((req,res,next) => {
     const {password} = req.query;
@@ -32,62 +63,31 @@ const verifyPassword = ((req,res,next) => {
     } 
 })
 
+
+
 app.get('/secret',verifyPassword,(req,res) => {
     res.send('my secret is i"m a good developer')
 })
 
+app.use('/campgrounds',campgrounds)
+app.use('/campgrounds/:id/reviews',reviews)
 
-// all camps 
-app.get('/campgrounds',async (req,res) => {
-    const camps = await Campground.find()
-    console.log(camps)
-    res.render('campground/index',{camps})
+
+//404 
+app.all('*',(req,res,next) => {
+    next(new ExpressError('Page Not Found',404))
 })
 
-// get new route
-app.get('/campgrounds/new',(req,res) => {
-    res.render('campground/new')
-})
-
-// show route
-app.get('/campgrounds/:id', async(req,res) => {
-    const {id} = req.params;
-    const camp = await Campground.findById(id)
-    console.log(camp)
-    res.render('campground/show',{camp})
-})
-
-// post new route
-app.post('/campgrounds',async (req,res) => {
-    console.log(req.body.campground)
-    const camp = new Campground(req.body.campground)
-    await camp.save();
-    res.redirect(`/campgrounds/${campground._id}`)
-})
-
-// delete route
-app.delete('/campgrounds/:id',async (req,res) => {
-    const {id} = req.params;
-    await Campground.findByIdAndDelete(id).then(data => console.log(data))
-    res.redirect('/campgrounds')
+// error handle 
+app.use((err,req,res,next) => {
+    console.log('this is err',err)
+    const { statusCode = 500, message = 'Something went wrong'} = err;
+    res.status(statusCode).render('error',{err})
     
-})
-
-// update 
-app.get('/campgrounds/:id/edit',async (req,res) => {
-    const {id} = req.params;
-    const camp = await Campground.findById(id)
-    res.render('campground/edit',{camp})
-})
-
-// PUT 
-app.put('/campgrounds/:id',async (req,res) => {
-    const {id} = req.params;
-    await Campground.findByIdAndUpdate(id,req.body)
-    res.redirect(`/campgrounds/${id}`)
 })
 
 
 app.listen(3000,()=>{
     console.log('server started')
 })
+

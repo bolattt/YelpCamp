@@ -33,11 +33,11 @@ const getPhoto = async () => {
 }
 
 const saveCamp = async() => {
-    // await Campground.deleteMany({});
+    await Campground.deleteMany({});
     const data = await getPhoto();
 
     for ( let i=0; i<3; i++){
-        
+
         const img = data[i].src.medium;
         const desc =  data[i].alt; 
 
@@ -57,6 +57,8 @@ const saveCamp = async() => {
 }
 
 saveCamp();
+
+
 
 
 
