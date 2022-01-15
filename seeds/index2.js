@@ -23,7 +23,7 @@ const getPhoto = async () => {
     const url = 'https://api.pexels.com/v1/search'
     const config = {
         headers:{Authorization:pexelsKey},
-        params:{query:'landscape',per_page:3}}
+        params:{query:'landscape',per_page:5}}
     try{
         const data = await axios.get(`${url}`,config);
         return data.data.photos;
@@ -36,7 +36,7 @@ const saveCamp = async() => {
     await Campground.deleteMany({});
     const data = await getPhoto();
 
-    for ( let i=0; i<3; i++){
+    for ( let i=0; i<5; i++){
 
         const img = data[i].src.medium;
         const desc =  data[i].alt; 
@@ -44,6 +44,7 @@ const saveCamp = async() => {
         console.log(img)
         
         const camp = new Campground({
+            author:'61e202c75378c03aec2e32c2',
             title:`${descriptors[randomNum(descriptors)]} ${places[randomNum(places)]}`,
             location:`${cities[randomNum(cities)].city}, ${cities[randomNum(cities)].state}`,
             image:img,

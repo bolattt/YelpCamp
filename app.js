@@ -74,10 +74,10 @@ app.all('*',(req,res,next) => {
 })
 
 // error handle 
-app.use((err,req,res,next) => {
-    console.log('this is err',err)
-    const { statusCode = 500, message = 'Something went wrong'} = err;
-    res.status(statusCode).render('error',{err})   
+app.use((err, req, res, next) => {
+    const { statusCode = 500 } = err;
+    if (!err.message) err.message = 'Oh No, Something Went Wrong!'
+    res.status(statusCode).render('error', { err })
 })
 
 app.listen(3000,()=>{
