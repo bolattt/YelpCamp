@@ -56,3 +56,4 @@ module.exports.deleteCampground =  async (req,res) => {
     req.flash('success','Successfully deleted Campground!')
     res.redirect('/campgrounds')  
 }
+
