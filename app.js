@@ -27,7 +27,8 @@ const reviewRoutes = require('./routes/reviews')
 const MongoDBStore = require('connect-mongo')
 
 const dbUrl = process.env.DB_URL || 'mongodb://localhost:27017/yelp-camp'
-mongoose.connect('mongodb://localhost:27017/yelp-camp')
+const secret = process.env.SECRET || 'thisshouldbeabettersecret!'
+mongoose.connect(dbUrl)
 .then(()=>console.log('database connected'))
 .catch(err => console.log(err))
 
@@ -41,8 +42,8 @@ app.use(morgan('tiny'))
 app.use(express.static(path.join(__dirname,'public')))
 
 const store = MongoDBStore.create({
-    mongoUrl: 'mongodb://localhost:27017/yelp-camp',
-    secret: 'thisshouldbeabettersecret!',
+    mongoUrl: dbUrl,
+    secret,
     touchAfter:24*60*60
 })
 
@@ -53,7 +54,7 @@ store.on("error",function(e){
 const sessionConfig ={
     store,
     name:'session',
-    secret: 'thisshouldbeabettersecret',
+    secret,
     resave:false,
     saveUnitialized:true,
     cookie:{
@@ -98,8 +99,8 @@ app.use((err, req, res, next) => {
     if (!err.message) err.message = 'Oh No, Something Went Wrong!'
     res.status(statusCode).render('error', { err })
 })
-
-app.listen(3000,()=>{
-    console.log('server started')
+const port = process.env.PORT || 3000
+app.listen(port,()=>{
+    console.log(`Server started on port ${port}`)
 })
 
